@@ -10,14 +10,15 @@ body{background:#020617;color:#e5e7eb;font-family:Segoe UI,Arial,sans-serif;padd
 .header{display:flex;justify-content:space-between;align-items:center}
 .wifi{font-size:26px;color:#38bdf8}
 h1,h2{color:#38bdf8;text-align:center}
-label{display:block;margin-top:15px;font-weight:600}
+label{display:block;margin-top:18px;font-weight:600}
 input{width:100%;padding:10px;margin-top:5px;background:#020617;color:#e5e7eb;border:1px solid #334155;border-radius:8px}
-textarea{width:100%;height:260px;margin-top:10px;background:#020617;color:#22c55e;border:1px solid #334155;border-radius:8px;padding:12px;font-family:Consolas,monospace;font-size:14px}
-button{margin-top:20px;padding:12px 20px;background:#38bdf8;color:#020617;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+.note{font-size:12px;color:#94a3b8;margin-top:4px}
+textarea{width:100%;height:280px;margin-top:10px;background:#020617;color:#22c55e;border:1px solid #334155;border-radius:8px;padding:12px;font-family:Consolas,monospace;font-size:14px}
+button{margin-top:22px;padding:12px 22px;background:#38bdf8;color:#020617;border:none;border-radius:8px;font-size:15px;cursor:pointer}
 button:hover{background:#0ea5e9}
-.tutorial{margin-top:35px;background:#020617;border:1px solid #334155;border-radius:12px;padding:25px}
+.tutorial{margin-top:35px;background:#020617;border:1px solid #334155;border-radius:12px;padding:22px}
 .tutorial ol{margin-left:20px;line-height:1.8}
-.code{background:#020617;border:1px dashed #334155;border-radius:8px;padding:12px;margin:10px 0;font-family:Consolas,monospace;color:#22c55e}
+.code{background:#020617;border:1px dashed #334155;border-radius:8px;padding:10px;margin:10px 0;font-family:Consolas,monospace;color:#22c55e}
 .footer{text-align:center;margin-top:35px;font-size:13px;color:#94a3b8}
 .footer a{color:#38bdf8;text-decoration:none}
 </style>
@@ -33,48 +34,80 @@ button:hover{background:#0ea5e9}
 </div>
 
 <label>Interface Name</label>
-<input id="a1" value="sfp-sfpplus1">
+<input id="iface" value="sfp-sfpplus1">
+<div class="note">
+⚠️ Harus sama persis dengan nama interface di MikroTik (case-sensitive).
+</div>
 
 <label>Threshold High (bps)</label>
-<input id="a2" value="450000000">
+<input id="high" value="450000000">
+<div class="note">
+Dalam bit per second. Contoh: 450000000 ≈ 450 Mbps
+</div>
 
 <label>Threshold Low (bps)</label>
-<input id="a3" value="350000000">
+<input id="low" value="350000000">
+<div class="note">
+Harus lebih kecil dari Threshold High (hysteresis).
+</div>
 
-<label>Simple Queue yang dikecualikan</label>
-<input id="a4" value="PAKET FASUM">
+<label>Exclude Simple Queue (pisahkan dengan koma)</label>
+<input id="exclude" value="PAKET FASUM">
+<div class="note">
+Contoh: <code>PAKET FASUM,VIP-CLIENT,MANAGEMENT</code><br>
+⚠️ Nama queue harus sama persis (case-sensitive).
+</div>
 
 <label>Scheduler Interval</label>
-<input id="a5" value="30s">
+<input id="interval" value="30s">
+<div class="note">
+Contoh valid: <code>10s</code>, <code>30s</code>, <code>1m</code>, <code>5m</code>
+</div>
 
-<button onclick="_0xg()">Generate</button>
+<button onclick="generate()">Generate Script</button>
 
-<label>📌 SCRIPT (System → Scripts)</label>
-<textarea id="o1" readonly></textarea>
+<label>📌 SCRIPT (copy ke System → Scripts)</label>
+<textarea id="script" readonly></textarea>
 
-<label>⏱️ SCHEDULER (System → Scheduler)</label>
-<textarea id="o2" readonly></textarea>
+<label>⏱️ SCHEDULER (isi manual di System → Scheduler)</label>
+<textarea id="scheduler" readonly></textarea>
 
 <div class="tutorial">
 <h2>📘 Tutorial Pasang di Winbox</h2>
 
-<h3>1️⃣ Script</h3>
+<h3>1️⃣ Pasang Script</h3>
 <ol>
-<li>Winbox → <b>System → Scripts</b></li>
-<li>Klik <b>+</b></li>
-<li>Name:
-<div class="code">auto-queue-rx-all</div></li>
-<li>Paste isi <b>SCRIPT</b></li>
-<li>Apply → OK</li>
+  <li>Buka <b>Winbox</b></li>
+  <li>Masuk ke <b>System → Scripts</b></li>
+  <li>Klik <b>+</b></li>
+  <li>Isi <b>Name</b>:
+    <div class="code">auto-queue-rx-all</div>
+  </li>
+  <li>Paste seluruh isi dari kolom <b>SCRIPT</b></li>
+  <li>Klik <b>Apply</b> → <b>OK</b></li>
 </ol>
 
-<h3>2️⃣ Scheduler</h3>
+<h3>2️⃣ Pasang Scheduler</h3>
+<ol>
+  <li>Masuk ke <b>System → Scheduler</b></li>
+  <li>Klik <b>+</b></li>
+</ol>
+
 <div class="code">
-Name : auto-queue-rx<br>
-Interval : sesuai input<br>
-On Event : auto-queue-rx-all<br>
-Policy : Read, Write, Policy
+Name      : auto-queue-rx<br>
+Interval  : (sesuai input, contoh 30s)<br>
+On Event  : auto-queue-rx-all<br>
+Policy    : ✔ Read ✔ Write ✔ Policy
 </div>
+
+<ol start="3">
+  <li>Klik <b>Apply</b> → <b>OK</b></li>
+</ol>
+
+<p>
+✅ Script akan berjalan otomatis sesuai interval dan
+mengaktifkan / menonaktifkan Simple Queue berdasarkan traffic RX.
+</p>
 </div>
 
 <div class="footer">
@@ -86,19 +119,32 @@ linkedin.com/in/bagus-pribadi
 
 </div>
 
+<!-- ===== FULL ===== -->
 <script>
 (function(){
-const _x=['value','getElementById','o1','o2'];
-const _g=function(i){return document[_x[1]](i)[_x[0]]};
+const _0xA=['value','getElementById','split','map','trim','filter','join'];
+const _0xB=function(x){return document[_0xA[1]](x)[_0xA[0]]};
 
-window['_0xg']=function(){
-let i=_g('a1'),h=_g('a2'),l=_g('a3'),e=_g('a4'),t=_g('a5');
+window['generate']=function(){
+  let a=_0xB('iface'),
+      b=_0xB('high'),
+      c=_0xB('low'),
+      d=_0xB('interval'),
+      e=_0xB('exclude');
 
-document[_x[1]](_x[2]).value=
+  let f=e[_0xA[2]](',')
+        [_0xA[3]](x=>x[_0xA[4]]())
+        [_0xA[5]](x=>x);
+
+  let h=f.length
+        ? f.map(x=>`name!="${x}"`).join(' && ')
+        : 'true';
+
+document.getElementById('script').value=
 `# Nama script: auto-queue-rx-all
-:local interfaceName "${i}"
-:local thresholdHigh ${h}
-:local thresholdLow ${l}
+:local interfaceName "${a}"
+:local thresholdHigh ${b}
+:local thresholdLow ${c}
 
 # Ambil traffic RX saat ini (dalam bytes per second)
 :local rxRate [/interface monitor-traffic $interfaceName once as-value]
@@ -107,9 +153,9 @@ document[_x[1]](_x[2]).value=
 # Konversi ke Mbps untuk logging
 :local rxMbps ($rxBytes / 1000000)
 
-# Cek apakah ada queue yang disabled (kecuali ${e})
+# Cek apakah ada queue yang disabled (kecuali exclude)
 :local hasDisabled false
-:foreach i in=[/queue simple find name!="${e}"] do={
+:foreach i in=[/queue simple find ${h}] do={
     :if ([/queue simple get $i disabled] = true) do={
         :set hasDisabled true
     }
@@ -118,21 +164,21 @@ document[_x[1]](_x[2]).value=
 # Logika enable/disable
 :if ($rxBytes > $thresholdHigh) do={
     :if ($hasDisabled = true) do={
-        /queue simple enable [find name!="${e}"]
-        :log info "Traffic RX: $rxMbps Mbps - Simple Queue ENABLED (kecuali ${e})"
+        /queue simple enable [find ${h}]
+        :log info "Traffic RX: $rxMbps Mbps - Simple Queue ENABLED"
     }
 } else={
     :if ($rxBytes < $thresholdLow) do={
         :if ($hasDisabled = false) do={
-            /queue simple disable [find name!="${e}"]
-            :log info "Traffic RX: $rxMbps Mbps - Simple Queue DISABLED (kecuali ${e})"
+            /queue simple disable [find ${h}]
+            :log info "Traffic RX: $rxMbps Mbps - Simple Queue DISABLED"
         }
     }
 }`;
 
-document[_x[1]](_x[3]).value=
+document.getElementById('scheduler').value=
 `Name      : auto-queue-rx
-Interval  : ${t}
+Interval  : ${d}
 On Event  : auto-queue-rx-all
 Policy    : Read, Write, Policy`;
 };

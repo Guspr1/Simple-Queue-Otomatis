@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>MikroTik Auto Queue RX Generator (Winbox Safe)</title>
+
+<style>
+body{background:#020617;color:#e5e7eb;font-family:Segoe UI,Arial,sans-serif;padding:20px}
+.container{max-width:1100px;margin:auto;border:1px solid #1e293b;border-radius:14px;padding:25px}
+.header{display:flex;justify-content:space-between;align-items:center}
+.wifi{font-size:26px;color:#38bdf8}
+h1,h2{color:#38bdf8;text-align:center}
+label{display:block;margin-top:15px;font-weight:600}
+input{width:100%;padding:10px;margin-top:5px;background:#020617;color:#e5e7eb;border:1px solid #334155;border-radius:8px}
+textarea{width:100%;height:260px;margin-top:10px;background:#020617;color:#22c55e;border:1px solid #334155;border-radius:8px;padding:12px;font-family:Consolas,monospace;font-size:14px}
+button{margin-top:20px;padding:12px 20px;background:#38bdf8;color:#020617;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+button:hover{background:#0ea5e9}
+.tutorial{margin-top:35px;background:#020617;border:1px solid #334155;border-radius:12px;padding:25px}
+.tutorial ol{margin-left:20px;line-height:1.8}
+.code{background:#020617;border:1px dashed #334155;border-radius:8px;padding:12px;margin:10px 0;font-family:Consolas,monospace;color:#22c55e}
+.footer{text-align:center;margin-top:35px;font-size:13px;color:#94a3b8}
+.footer a{color:#38bdf8;text-decoration:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+  <div class="wifi">📶</div>
+  <h1>Auto Queue RX Generator (Winbox Safe)</h1>
+  <div class="wifi">📶</div>
+</div>
+
+<label>Interface Name</label>
+<input id="a1" value="sfp-sfpplus1">
+
+<label>Threshold High (bps)</label>
+<input id="a2" value="450000000">
+
+<label>Threshold Low (bps)</label>
+<input id="a3" value="350000000">
+
+<label>Simple Queue yang dikecualikan</label>
+<input id="a4" value="PAKET FASUM">
+
+<label>Scheduler Interval</label>
+<input id="a5" value="30s">
+
+<button onclick="_0xg()">Generate</button>
+
+<label>📌 SCRIPT (System → Scripts)</label>
+<textarea id="o1" readonly></textarea>
+
+<label>⏱️ SCHEDULER (System → Scheduler)</label>
+<textarea id="o2" readonly></textarea>
+
+<div class="tutorial">
+<h2>📘 Tutorial Pasang di Winbox</h2>
+
+<h3>1️⃣ Script</h3>
+<ol>
+<li>Winbox → <b>System → Scripts</b></li>
+<li>Klik <b>+</b></li>
+<li>Name:
+<div class="code">auto-queue-rx-all</div></li>
+<li>Paste isi <b>SCRIPT</b></li>
+<li>Apply → OK</li>
+</ol>
+
+<h3>2️⃣ Scheduler</h3>
+<div class="code">
+Name : auto-queue-rx<br>
+Interval : sesuai input<br>
+On Event : auto-queue-rx-all<br>
+Policy : Read, Write, Policy
+</div>
+</div>
+
+<div class="footer">
+Author: <b>M Bagus Pribadi</b><br>
+<a href="https://www.linkedin.com/in/bagus-pribadi" target="_blank">
+linkedin.com/in/bagus-pribadi
+</a>
+</div>
+
+</div>
+
+<script>
+(function(){
+const _x=['value','getElementById','o1','o2'];
+const _g=function(i){return document[_x[1]](i)[_x[0]]};
+
+window['_0xg']=function(){
+let i=_g('a1'),h=_g('a2'),l=_g('a3'),e=_g('a4'),t=_g('a5');
+
+document[_x[1]](_x[2]).value=
+`# Nama script: auto-queue-rx-all
+:local interfaceName "${i}"
+:local thresholdHigh ${h}
+:local thresholdLow ${l}
+
+# Ambil traffic RX saat ini (dalam bytes per second)
+:local rxRate [/interface monitor-traffic $interfaceName once as-value]
+:local rxBytes ($rxRate->"rx-bits-per-second")
+
+# Konversi ke Mbps untuk logging
+:local rxMbps ($rxBytes / 1000000)
+
+# Cek apakah ada queue yang disabled (kecuali ${e})
+:local hasDisabled false
+:foreach i in=[/queue simple find name!="${e}"] do={
+    :if ([/queue simple get $i disabled] = true) do={
+        :set hasDisabled true
+    }
+}
+
+# Logika enable/disable
+:if ($rxBytes > $thresholdHigh) do={
+    :if ($hasDisabled = true) do={
+        /queue simple enable [find name!="${e}"]
+        :log info "Traffic RX: $rxMbps Mbps - Simple Queue ENABLED (kecuali ${e})"
+    }
+} else={
+    :if ($rxBytes < $thresholdLow) do={
+        :if ($hasDisabled = false) do={
+            /queue simple disable [find name!="${e}"]
+            :log info "Traffic RX: $rxMbps Mbps - Simple Queue DISABLED (kecuali ${e})"
+        }
+    }
+}`;
+
+document[_x[1]](_x[3]).value=
+`Name      : auto-queue-rx
+Interval  : ${t}
+On Event  : auto-queue-rx-all
+Policy    : Read, Write, Policy`;
+};
+})();
+</script>
+
+</body>
+</html>
